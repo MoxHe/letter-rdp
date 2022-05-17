@@ -1,2 +1,3 @@
 .intuitgithookrc
 *.js
+node_modules
