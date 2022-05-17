@@ -1,10 +1,18 @@
-const { Tokenizer } = require('./Toeknizer');
+import Tokenizer, { Token } from './Tokenizer';
 
+type ProgramType = { type: string; body: LiteralType };
+type LiteralType = StringLiteralType | NumericLiteralType;
+type StringLiteralType = { type: string; value: string };
+type NumericLiteralType = { type: string; value: number };
 
 /**
  * Letter Parser: recursive descent implementation.
  */
-class Parser {
+export default class Parser {
+  private _string: string;
+  private _tokenizer: Tokenizer;
+  private _lookahead: Token | null = null;
+
   /**
    * Initializes the parser.
    */
@@ -16,9 +24,9 @@ class Parser {
   /**
    * Parses a string into an AST.
    */
-  parse(string) {
+  parse(string: string) {
     this._string = string;
-    this._tokenizer.init(string);
+    this._tokenizer.init(this._string);
 
     // Prime the tokenizer to obtain the first
     // toekn which is our lookahead. The lookahead is
@@ -38,7 +46,7 @@ class Parser {
    *  : Literal
    *  ;
    */
-  Program() {
+  Program(): ProgramType {
     return {
       type: 'Program',
       body: this.Literal(),
@@ -51,8 +59,12 @@ class Parser {
    *   | StringLiteral
    *   ;
    */
-  Literal() {
-    switch(this._lookahead.type) {
+  Literal(): LiteralType {
+    if (!this._lookahead) {
+      throw new SyntaxError(`Literal: unexpected literal production`);
+    }
+
+    switch (this._lookahead.type) {
       case 'NUMBER':
         return this.NumericLiteral();
       case 'STRING':
@@ -67,7 +79,7 @@ class Parser {
    *   : STRING
    *   ;
    */
-  StringLiteral() {
+  StringLiteral(): StringLiteralType {
     const token = this._eat('STRING');
     return {
       type: 'StringLiteral',
@@ -80,7 +92,7 @@ class Parser {
    *  : NUMBER
    *  ;
    */
-  NumericLiteral() {
+  NumericLiteral(): NumericLiteralType {
     const token = this._eat('NUMBER');
     return {
       type: 'NumericLiteral',
@@ -91,19 +103,19 @@ class Parser {
   /**
    * Expects a token of a given type.
    */
-  _eat(tokenType) {
+  _eat(tokenType: string): Token {
     const token = this._lookahead;
 
     if (token === null) {
       throw new SyntaxError(
         `Unexpected end of input, expected: "${tokenType}"`
-      )
+      );
     }
 
     if (token.type !== tokenType) {
       throw new SyntaxError(
         `Unexpected token: "${token.value}", expected: "${tokenType}"`
-      )
+      );
     }
 
     // Advance to next token.
@@ -111,8 +123,4 @@ class Parser {
 
     return token;
   }
-}
-
-module.exports = {
-  Parser,
 }

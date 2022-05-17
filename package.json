@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "build": "yarn tsc --build",
+    "clean": "yarn tsc --build --clean",
+    "test": "node __tests__/run.js"
+  },
+  "devDependencies": {
+    "typescript": "^4.6.4"
+  }
+}
