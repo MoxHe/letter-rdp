@@ -1,9 +1,13 @@
 import Tokenizer, { Token } from './Tokenizer';
 
-type ProgramType = { type: string; body: LiteralType };
+type ProgramType = { type: string; body: StatementListType };
 type LiteralType = StringLiteralType | NumericLiteralType;
 type StringLiteralType = { type: string; value: string };
 type NumericLiteralType = { type: string; value: number };
+type StatementListType = Array<StatementType>;
+type StatementType = ExpressionStatementType;
+type ExpressionStatementType = { type: string; expression: ExpressionType };
+type ExpressionType = LiteralType;
 
 /**
  * Letter Parser: recursive descent implementation.
@@ -11,7 +15,7 @@ type NumericLiteralType = { type: string; value: number };
 export default class Parser {
   private _string: string;
   private _tokenizer: Tokenizer;
-  private _lookahead: Token | null = null;
+  private _lookahead: Token | null;
 
   /**
    * Initializes the parser.
@@ -19,13 +23,15 @@ export default class Parser {
   constructor() {
     this._string = '';
     this._tokenizer = new Tokenizer();
+    this._lookahead = null;
   }
 
   /**
    * Parses a string into an AST.
    */
-  parse(string: string) {
+  parse(string: string): ProgramType {
     this._string = string;
+    this._tokenizer = new Tokenizer();
     this._tokenizer.init(this._string);
 
     // Prime the tokenizer to obtain the first
@@ -43,14 +49,63 @@ export default class Parser {
    * Main entry point.
    *
    * Program
-   *  : Literal
+   *  : StatementList
    *  ;
    */
   Program(): ProgramType {
     return {
       type: 'Program',
-      body: this.Literal(),
+      body: this.StatementList(),
     };
+  }
+
+  /**
+   * StatementList
+   *   : Statement
+   *   | StatementList Statement -> Statement Statement Statement Statement
+   *   ;
+   */
+  StatementList(): StatementListType {
+    const statementList = [this.Statement()];
+
+    while (this._lookahead) {
+      statementList.push(this.Statement());
+    }
+
+    return statementList;
+  }
+
+  /**
+   * Statement
+   *  : ExpressionStatement
+   *  ;
+   */
+  Statement(): StatementType {
+    return this.ExpressionStatement();
+  }
+
+  /**
+   * ExpressionStatement
+   *   : Expression ';'
+   *   ;
+   */
+  ExpressionStatement(): ExpressionStatementType {
+    const expression = this.Expression();
+    this._eat(';');
+
+    return {
+      type: 'ExpressionStatement',
+      expression,
+    }
+  }
+
+  /**
+   * Expression
+   *   : Literal
+   *   ;
+   */
+  Expression(): ExpressionType {
+    return this.Literal();
   }
 
   /**

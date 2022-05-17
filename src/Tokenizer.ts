@@ -18,6 +18,10 @@ const Spec: Array<[RegExp, string | null]> = [
   [/^\/\*[\s\S]*?\*\//, null],
 
   // -----------------------------------
+  // Symbols, delimiters:
+  [/^;/, ';'],
+
+  // -----------------------------------
   // Numbers:
   [/^\d+/, 'NUMBER'],
 
@@ -33,8 +37,13 @@ const Spec: Array<[RegExp, string | null]> = [
  * Lazily pulls a token from a stream.
  */
 export default class Tokenizer {
-  private _string = '';
-  private _cursor = 0;
+  private _string: string;
+  private _cursor: number;
+
+  constructor() {
+    this._string = '';
+    this._cursor = 0;
+  }
 
   /**
    * Initializes the string.
