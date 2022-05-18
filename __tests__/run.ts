@@ -1,6 +1,8 @@
 import Parser from '../src/Parser';
 import literalTests from './literals-test';
 import statementListTest from './statement-list-test';
+import blockTest from './block-test';
+import emptyStatementTest from './empty-statement-test';
 import assert from 'assert';
 
 /**
@@ -10,7 +12,7 @@ import assert from 'assert';
 /**
  * List of tests
  */
-const tests = [literalTests, statementListTest]
+const tests = [literalTests, statementListTest, blockTest, emptyStatementTest];
 
 const parser = new Parser();
 
@@ -32,17 +34,18 @@ export function exec(): void {
   console.log(JSON.stringify(ast, null, 2));
 }
 
-exec();
+// Manual test
+// exec();
 
 /**
  * Test function.
  */
 function test(program: string, expected: object): void {
-   const ast = parser.parse(program);
-   assert.deepStrictEqual(ast, expected)
+  const ast = parser.parse(program);
+  assert.deepStrictEqual(ast, expected);
 }
 
 // Run all tests:
-tests.forEach(testRun => testRun(test));
+tests.forEach((testRun) => testRun(test));
 
 console.log('All assertions passed!');

@@ -5,8 +5,10 @@ type LiteralType = StringLiteralType | NumericLiteralType;
 type StringLiteralType = { type: string; value: string };
 type NumericLiteralType = { type: string; value: number };
 type StatementListType = Array<StatementType>;
-type StatementType = ExpressionStatementType;
+type StatementType = ExpressionStatementType | BlockStatementType | EmptyStatementType;
 type ExpressionStatementType = { type: string; expression: ExpressionType };
+type BlockStatementType = { type: string; body: StatementListType };
+type EmptyStatementType = { type: string };
 type ExpressionType = LiteralType;
 
 /**
@@ -65,10 +67,10 @@ export default class Parser {
    *   | StatementList Statement -> Statement Statement Statement Statement
    *   ;
    */
-  StatementList(): StatementListType {
+  StatementList(stopLookahead: string | null = null): StatementListType {
     const statementList = [this.Statement()];
 
-    while (this._lookahead) {
+    while (this._lookahead && this._lookahead.type !== stopLookahead) {
       statementList.push(this.Statement());
     }
 
@@ -78,10 +80,57 @@ export default class Parser {
   /**
    * Statement
    *  : ExpressionStatement
+   *  | BlockStatement
+   *  | EmptyStatement
    *  ;
    */
   Statement(): StatementType {
-    return this.ExpressionStatement();
+    if (!this._lookahead) {
+      throw new SyntaxError(`Unexpected end of input, expected: Statement`);
+    }
+    switch (this._lookahead.type) {
+      case ';':
+        return this.EmptyStatement();
+      case '{':
+        return this.BlockStatement();
+      default:
+        return this.ExpressionStatement();
+    }
+  }
+
+  /**
+   * EmptyStatement
+   *   : ';'
+   *   ;
+   */
+  EmptyStatement(): EmptyStatementType {
+    this._eat(';');
+
+    return {
+      type: 'EmptyStatement',
+    };
+  }
+
+  /**
+   * BlockStatement
+   *   : '{'  optStatementList '}'
+   *   ;
+   */
+  BlockStatement(): BlockStatementType {
+    this._eat('{');
+    if (!this._lookahead) {
+      throw new SyntaxError(`Unexpected end of input, expected: "}"`);
+    }
+
+    const body: StatementListType =
+      this._lookahead.type !== '}' ? this.StatementList('}') : [];
+
+    this._eat('}');
+
+    return {
+      type: 'BlockStatement',
+      body,
+    };
   }
 
   /**
@@ -96,7 +145,7 @@ export default class Parser {
     return {
       type: 'ExpressionStatement',
       expression,
-    }
+    };
   }
 
   /**
@@ -116,7 +165,7 @@ export default class Parser {
    */
   Literal(): LiteralType {
     if (!this._lookahead) {
-      throw new SyntaxError(`Literal: unexpected literal production`);
+      throw new SyntaxError(`Unexpected end of input, expected: Literal`);
     }
 
     switch (this._lookahead.type) {
