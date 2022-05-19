@@ -21,13 +21,7 @@ const parser = new Parser();
  */
 export function exec(): void {
   const program = `
-  /**
-   * Documentation
-   */
-   'hello';
-
-   // Number
-   42;
+  (2);
 `;
   const ast = parser.parse(program);
 
@@ -35,7 +29,7 @@ export function exec(): void {
 }
 
 // Manual test
-// exec();
+exec();
 
 /**
  * Test function.

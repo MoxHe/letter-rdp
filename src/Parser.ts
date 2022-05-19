@@ -1,15 +1,5 @@
 import Tokenizer, { Token } from './Tokenizer';
-
-type ProgramType = { type: string; body: StatementListType };
-type LiteralType = StringLiteralType | NumericLiteralType;
-type StringLiteralType = { type: string; value: string };
-type NumericLiteralType = { type: string; value: number };
-type StatementListType = Array<StatementType>;
-type StatementType = ExpressionStatementType | BlockStatementType | EmptyStatementType;
-type ExpressionStatementType = { type: string; expression: ExpressionType };
-type BlockStatementType = { type: string; body: StatementListType };
-type EmptyStatementType = { type: string };
-type ExpressionType = LiteralType;
+import * as Types from './types';
 
 /**
  * Letter Parser: recursive descent implementation.
@@ -31,7 +21,7 @@ export default class Parser {
   /**
    * Parses a string into an AST.
    */
-  parse(string: string): ProgramType {
+  parse(string: string): Types.ProgramType {
     this._string = string;
     this._tokenizer = new Tokenizer();
     this._tokenizer.init(this._string);
@@ -54,7 +44,7 @@ export default class Parser {
    *  : StatementList
    *  ;
    */
-  Program(): ProgramType {
+  Program(): Types.ProgramType {
     return {
       type: 'Program',
       body: this.StatementList(),
@@ -67,7 +57,7 @@ export default class Parser {
    *   | StatementList Statement -> Statement Statement Statement Statement
    *   ;
    */
-  StatementList(stopLookahead: string | null = null): StatementListType {
+  StatementList(stopLookahead: string | null = null): Types.StatementListType {
     const statementList = [this.Statement()];
 
     while (this._lookahead && this._lookahead.type !== stopLookahead) {
@@ -84,18 +74,19 @@ export default class Parser {
    *  | EmptyStatement
    *  ;
    */
-  Statement(): StatementType {
-    if (!this._lookahead) {
-      throw new SyntaxError(`Unexpected end of input, expected: Statement`);
+  Statement(): Types.StatementType {
+    if (this._lookahead) {
+      switch (this._lookahead.type) {
+        case ';':
+          return this.EmptyStatement();
+        case '{':
+          return this.BlockStatement();
+        default:
+          return this.ExpressionStatement();
+      }
     }
-    switch (this._lookahead.type) {
-      case ';':
-        return this.EmptyStatement();
-      case '{':
-        return this.BlockStatement();
-      default:
-        return this.ExpressionStatement();
-    }
+
+    throw new SyntaxError(`Statement: unexpected statement production`);
   }
 
   /**
@@ -103,7 +94,7 @@ export default class Parser {
    *   : ';'
    *   ;
    */
-  EmptyStatement(): EmptyStatementType {
+  EmptyStatement(): Types.EmptyStatementType {
     this._eat(';');
 
     return {
@@ -116,14 +107,13 @@ export default class Parser {
    *   : '{'  optStatementList '}'
    *   ;
    */
-  BlockStatement(): BlockStatementType {
+  BlockStatement(): Types.BlockStatementType {
     this._eat('{');
-    if (!this._lookahead) {
-      throw new SyntaxError(`Unexpected end of input, expected: "}"`);
-    }
 
-    const body: StatementListType =
-      this._lookahead.type !== '}' ? this.StatementList('}') : [];
+    const body: Types.StatementListType =
+      this._lookahead && this._lookahead.type !== '}'
+        ? this.StatementList('}')
+        : [];
 
     this._eat('}');
 
@@ -138,8 +128,8 @@ export default class Parser {
    *   : Expression ';'
    *   ;
    */
-  ExpressionStatement(): ExpressionStatementType {
-    const expression = this.Expression();
+  ExpressionStatement(): Types.ExpressionStatementType {
+    const expression: Types.ExpressionType = this.Expression();
     this._eat(';');
 
     return {
@@ -150,11 +140,97 @@ export default class Parser {
 
   /**
    * Expression
-   *   : Literal
+   *   : AdditiveExpression
    *   ;
    */
-  Expression(): ExpressionType {
-    return this.Literal();
+  Expression(): Types.ExpressionType {
+    return this.AdditiveExpression();
+  }
+
+  /**
+   * AdditiveExpression
+   *   : MultiplicativeExpression
+   *   | AdditiveExpression ADDITIVE_OPERATOR MultiplicativeExpression -> MultiplicativeExpression ADDITIVE_OPERATOR MultiplicativeExpression ADDITIVE_OPERATOR MultiplicativeExpression
+   *   ;
+   */
+  AdditiveExpression(): Types.BinaryExpressionType {
+    return this._BinaryExpression(
+      'MultiplicativeExpression',
+      'ADDITIVE_OPERATOR'
+    );
+  }
+
+  /**
+   * MultiplicativeExpression
+   *   : PrimaryExpression
+   *   | MultiplicativeExpression MULTIPLICATIVE_OPERATOR PrimaryExpression -> PrimaryExpression ADDITIVE_OPERATOR PrimaryExpression ADDITIVE_OPERATOR PrimaryExpression
+   *   ;
+   */
+  MultiplicativeExpression(): Types.BinaryExpressionType {
+    return this._BinaryExpression(
+      'PrimaryExpression',
+      'MULTIPLICATIVE_OPERATOR'
+    );
+  }
+
+  /**
+   * Generic binary expression
+   */
+  _BinaryExpression(
+    builderName: 'MultiplicativeExpression' | 'PrimaryExpression',
+    operatorToken: 'ADDITIVE_OPERATOR' | 'MULTIPLICATIVE_OPERATOR'
+  ): Types.BinaryExpressionType {
+    let left = this[builderName]();
+
+    while (this._lookahead && this._lookahead.type === operatorToken) {
+      // Operator: +, -, *, /
+      const operator = this._eat(operatorToken).value;
+
+      const right = this[builderName]();
+
+      left = {
+        type: 'BinaryExpression',
+        operator,
+        left,
+        right,
+      };
+    }
+
+    return left;
+  }
+
+  /**
+   * PrimaryExpression
+   *  : Literal
+   *  | ParenthesizedExpression
+   *  ;
+   */
+  PrimaryExpression(): Types.ExpressionType {
+    if (this._lookahead) {
+      switch (this._lookahead.type) {
+        case '(':
+          return this.ParenthesizedExpression();
+        default:
+          return this.Literal();
+      }
+    }
+
+    throw new SyntaxError(
+      `PrimaryExpression: unexpected primary expression production`
+    );
+  }
+
+  /**
+   * ParenthesizedExpression
+   *   : '(' Expression ')'
+   *   ;
+   */
+  ParenthesizedExpression(): Types.ExpressionType {
+    this._eat('(');
+    const expression: Types.ExpressionType = this.Expression();
+    this._eat(')');
+
+    return expression;
   }
 
   /**
@@ -163,16 +239,14 @@ export default class Parser {
    *   | StringLiteral
    *   ;
    */
-  Literal(): LiteralType {
-    if (!this._lookahead) {
-      throw new SyntaxError(`Unexpected end of input, expected: Literal`);
-    }
-
-    switch (this._lookahead.type) {
-      case 'NUMBER':
-        return this.NumericLiteral();
-      case 'STRING':
-        return this.StringLiteral();
+  Literal(): Types.LiteralType {
+    if (this._lookahead) {
+      switch (this._lookahead.type) {
+        case 'NUMBER':
+          return this.NumericLiteral();
+        case 'STRING':
+          return this.StringLiteral();
+      }
     }
 
     throw new SyntaxError(`Literal: unexpected literal production`);
@@ -183,7 +257,7 @@ export default class Parser {
    *   : STRING
    *   ;
    */
-  StringLiteral(): StringLiteralType {
+  StringLiteral(): Types.StringLiteralType {
     const token = this._eat('STRING');
     return {
       type: 'StringLiteral',
@@ -196,7 +270,7 @@ export default class Parser {
    *  : NUMBER
    *  ;
    */
-  NumericLiteral(): NumericLiteralType {
+  NumericLiteral(): Types.NumericLiteralType {
     const token = this._eat('NUMBER');
     return {
       type: 'NumericLiteral',
