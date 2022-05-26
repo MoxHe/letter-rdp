@@ -140,11 +140,89 @@ export default class Parser {
 
   /**
    * Expression
-   *   : AdditiveExpression
+   *   : AssignmentExpression
    *   ;
    */
   Expression(): Types.ExpressionType {
-    return this.AdditiveExpression();
+    return this.AssignmentExpression();
+  }
+
+  /**
+   * AssignmentExpression
+   *   : AdditiveExpression
+   *   | LeftHandSideExpression AssignmentOperator AssignmentExpression
+   *   ;
+   */
+  AssignmentExpression(): Types.ExpressionType {
+    const left = this.AdditiveExpression();
+
+    if (this._lookahead && !this._isAssignmentOperator(this._lookahead.type)) {
+      return left;
+    }
+
+    return {
+      type: 'AssignmentExpression',
+      operator: this.AssignmentOperator().value,
+      left: this._checkValidAssignmentTarget(left),
+      right: this.AssignmentExpression(),
+    };
+  }
+
+  /**
+   * LeftHandSideExpression
+   * : Identifier
+   * ;
+   */
+  LeftHandSideExpression(): Types.IdentifierType {
+    return this.Identifier();
+  }
+
+  /**
+   * Identifier
+   * : IDENTIFIER
+   * ;
+   */
+  Identifier(): Types.IdentifierType {
+    const name = this._eat('IDENTIFIER').value;
+
+    return {
+      type: 'Identifier',
+      name,
+    };
+  }
+
+  /**
+   * Extra check whether it's a valid assinment target.
+   */
+  _checkValidAssignmentTarget(
+    node: Types.BinaryExpressionType
+  ): Types.BinaryExpressionType {
+    if (node.type === 'Identifier') {
+      return node;
+    }
+
+    throw new SyntaxError('Invalid left-hand side assignment expression.');
+  }
+
+  /**
+   * Whether the token is an assignment operator.
+   */
+  _isAssignmentOperator(tokenType: string): boolean {
+    return tokenType === 'SIMPLE_ASSIGN' || tokenType === 'COMPLEX_ASSIGN';
+  }
+
+  /**
+   * AssignmentOperator
+   * : SIMPLE_ASSIGN
+   * | COMPLEX_ASSIGN
+   * ;
+   */
+  AssignmentOperator(): Token {
+    if (this._lookahead && this._lookahead.type === 'SIMPLE_ASSIGN') {
+      return this._eat('SIMPLE_ASSIGN');
+    }
+
+    return this._eat('COMPLEX_ASSIGN');
   }
 
   /**
@@ -203,21 +281,29 @@ export default class Parser {
    * PrimaryExpression
    *  : Literal
    *  | ParenthesizedExpression
+   *  | LeftHandSideExpression
    *  ;
    */
   PrimaryExpression(): Types.ExpressionType {
     if (this._lookahead) {
+      if (this._isLiteral(this._lookahead.type)) {
+        return this.Literal();
+      }
       switch (this._lookahead.type) {
         case '(':
           return this.ParenthesizedExpression();
         default:
-          return this.Literal();
+          return this.LeftHandSideExpression();
       }
     }
 
     throw new SyntaxError(
       `PrimaryExpression: unexpected primary expression production`
     );
+  }
+
+  _isLiteral(tokenType: string): boolean {
+    return tokenType === 'NUMBER' || tokenType === 'STRING';
   }
 
   /**

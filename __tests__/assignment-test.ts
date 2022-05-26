@@ -1,0 +1,53 @@
+const assignmentTest = (test: Function) => {
+  test(`x = 42;`, {
+    type: 'Program',
+    body: [
+      {
+        type: 'ExpressionStatement',
+        expression: {
+          type: 'AssignmentExpression',
+          operator: '=',
+          left: {
+            type: 'Identifier',
+            name: 'x',
+          },
+          right: {
+            type: 'NumericLiteral',
+            value: 42,
+          },
+        },
+      },
+    ],
+  });
+
+  test(`x = y = 42;`, {
+    type: 'Program',
+    body: [
+      {
+        type: 'ExpressionStatement',
+        expression: {
+          type: 'AssignmentExpression',
+          operator: '=',
+          left: {
+            type: 'Identifier',
+            name: 'x',
+          },
+          right: {
+            type: 'AssignmentExpression',
+            operator: '=',
+            left: {
+              type: 'Identifier',
+              name: 'y',
+            },
+            right: {
+              tyep: 'NumericLiteral',
+              value: 42,
+            },
+          },
+        },
+      },
+    ],
+  });
+};
+
+export default assignmentTest;

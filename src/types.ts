@@ -16,14 +16,26 @@ export type BlockStatementType = { type: string; body: StatementListType };
 
 export type EmptyStatementType = { type: string };
 
-export type ExpressionType = BinaryExpressionType;
+export type ExpressionType = AssignmentExpressionType;
+
+export type AssignmentExpressionType =
+  | BinaryExpressionType
+  | {
+      type: string;
+      operator: string;
+      left: IdentifierType;
+      right: AssignmentExpressionType;
+    };
+
+export type IdentifierType = { type: string; name: string };
 
 export type BinaryExpressionType =
+  | IdentifierType
   | LiteralType
   | {
       type: string;
       operator: string;
-      left: LiteralType | BinaryExpressionType;
+      left: LiteralType | BinaryExpressionType | IdentifierType;
       right: LiteralType | BinaryExpressionType;
     };
 

@@ -26,13 +26,22 @@ const Spec: Array<[RegExp, string | null]> = [
   [/^\)/, ')'],
 
   // -----------------------------------
+  // Numbers:
+  [/^\d+/, 'NUMBER'],
+
+  // -----------------------------------
+  // Identifiers:
+  [/^\w+/, 'IDENTIFIER'],
+
+  // -----------------------------------
+  // Assignments operators: =, *=, /=, +=, -=,
+  [/^=/, 'SIMPLE_ASSIGN'],
+  [/^[\*\/\+\-]=/, 'COMPLEX_ASSIGN'],
+
+  // -----------------------------------
   // Math operators: +, -, *, /
   [/^[+\-]/, 'ADDITIVE_OPERATOR'],
   [/^[*\/]/, 'MULTIPLICATIVE_OPERATOR'],
-
-  // -----------------------------------
-  // Numbers:
-  [/^\d+/, 'NUMBER'],
 
   // -----------------------------------
   // Strings:
