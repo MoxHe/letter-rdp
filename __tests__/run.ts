@@ -3,6 +3,9 @@ import literalTests from './literals-test';
 import statementListTest from './statement-list-test';
 import blockTest from './block-test';
 import emptyStatementTest from './empty-statement-test';
+import mathTest from './math-test';
+import assignmentTest from './assignment-test';
+import variableTest from './variable-test';
 import assert from 'assert';
 
 /**
@@ -12,7 +15,15 @@ import assert from 'assert';
 /**
  * List of tests
  */
-const tests = [literalTests, statementListTest, blockTest, emptyStatementTest];
+const tests = [
+  literalTests,
+  statementListTest,
+  blockTest,
+  emptyStatementTest,
+  mathTest,
+  assignmentTest,
+  variableTest
+];
 
 const parser = new Parser();
 
@@ -21,8 +32,8 @@ const parser = new Parser();
  */
 export function exec(): void {
   const program = `
-  x += 1;
-`;
+  let foo = bar = 10;
+  `;
   const ast = parser.parse(program);
 
   console.log(JSON.stringify(ast, null, 2));

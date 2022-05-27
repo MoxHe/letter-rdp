@@ -7,6 +7,17 @@ export type StatementType =
   | BlockStatementType
   | EmptyStatementType;
 
+export type VariableStatement =  {
+  type: string,
+  declarations: VariableDeclarationType[]
+}
+
+export type VariableDeclarationType = {
+  type: string,
+  id: IdentifierType,
+  init: AssignmentExpressionType | null,
+}
+
 export type ExpressionStatementType = {
   type: string;
   expression: ExpressionType;

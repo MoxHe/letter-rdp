@@ -40,7 +40,7 @@ const assignmentTest = (test: Function) => {
               name: 'y',
             },
             right: {
-              tyep: 'NumericLiteral',
+              type: 'NumericLiteral',
               value: 42,
             },
           },

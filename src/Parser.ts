@@ -60,7 +60,7 @@ export default class Parser {
   StatementList(stopLookahead: string | null = null): Types.StatementListType {
     const statementList = [this.Statement()];
 
-    while (this._lookahead?.type !== stopLookahead) {
+    while (this._lookahead && this._lookahead.type !== stopLookahead) {
       statementList.push(this.Statement());
     }
 
@@ -72,21 +72,83 @@ export default class Parser {
    *  : ExpressionStatement
    *  | BlockStatement
    *  | EmptyStatement
+   *  | VariableStatement
    *  ;
    */
   Statement(): Types.StatementType {
-    if (this._lookahead) {
-      switch (this._lookahead.type) {
-        case ';':
-          return this.EmptyStatement();
-        case '{':
-          return this.BlockStatement();
-        default:
-          return this.ExpressionStatement();
-      }
+    switch (this._lookahead?.type) {
+      case ';':
+        return this.EmptyStatement();
+      case '{':
+        return this.BlockStatement();
+      case 'let':
+        return this.VariableStatement();
+      default:
+        return this.ExpressionStatement();
     }
+  }
 
-    throw new SyntaxError(`Statement: unexpected statement production`);
+    /**
+   * VariableStatement
+   * : 'let' VariableDeclarationList ';'
+   * ;
+   */
+  VariableStatement(): Types.VariableStatement {
+    this._eat('let');
+    const declarations = this.VariableDeclarationList();
+    this._eat(';');
+
+    return {
+      type: 'VariableStatement',
+      declarations,
+    };
+  }
+
+  /**
+   * VariableDeclarationList
+   * : VariableDeclaration
+   * | VariableDeclarationList ',' VariableDeclaration
+   * ;
+   */
+  VariableDeclarationList(): Types.VariableDeclarationType[] {
+    const declarations = [];
+
+    do {
+      declarations.push(this.VariableDeclaration());
+    } while (this._lookahead?.type === ',' && this._eat(','));
+
+    return declarations;
+  }
+
+  /**
+   * VariableDeclaration
+   *  : Identifier OptVariableInitializer
+   *  ;
+   */
+  VariableDeclaration(): Types.VariableDeclarationType {
+    const id = this.Identifier();
+
+    // OptVariableInitializer
+    const init = this._lookahead && this._lookahead?.type !== ';' && this._lookahead?.type !== ','
+    ? this.VariableInitializer()
+    : null;
+
+    return {
+      type: 'VariableDeclaration',
+      id,
+      init,
+    }
+  }
+
+  /**
+   * VariableInitializer
+   *  : SIMPLE_ASSIGN AssignmentExpression
+   *  ;
+   */
+  VariableInitializer(): Types.AssignmentExpressionType {
+    this._eat('SIMPLE_ASSIGN');
+
+    return this.AssignmentExpression();
   }
 
   /**
@@ -286,7 +348,6 @@ export default class Parser {
     if (this._isLiteral(this._lookahead?.type)) {
       return this.Literal();
     }
-
     switch (this._lookahead?.type) {
       case '(':
         return this.ParenthesizedExpression();

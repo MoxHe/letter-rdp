@@ -162,3 +162,5 @@ const mathTest = (test: Function) => {
     ],
   });
 };
+
+export default mathTest;
