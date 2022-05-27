@@ -87,9 +87,9 @@ export default class Tokenizer {
   /**
    * Obtains next token.
    */
-  getNextToken(): Token | null {
+  getNextToken(): Token | undefined {
     if (!this.hasMoreTokens()) {
-      return null;
+      return undefined;
     }
 
     const string = this._string.slice(this._cursor);

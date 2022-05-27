@@ -7,7 +7,7 @@ import * as Types from './types';
 export default class Parser {
   private _string: string;
   private _tokenizer: Tokenizer;
-  private _lookahead: Token | null;
+  private _lookahead?: Token;
 
   /**
    * Initializes the parser.
@@ -15,7 +15,7 @@ export default class Parser {
   constructor() {
     this._string = '';
     this._tokenizer = new Tokenizer();
-    this._lookahead = null;
+    this._lookahead = undefined;
   }
 
   /**
@@ -60,7 +60,7 @@ export default class Parser {
   StatementList(stopLookahead: string | null = null): Types.StatementListType {
     const statementList = [this.Statement()];
 
-    while (this._lookahead && this._lookahead.type !== stopLookahead) {
+    while (this._lookahead?.type !== stopLookahead) {
       statementList.push(this.Statement());
     }
 
@@ -111,9 +111,7 @@ export default class Parser {
     this._eat('{');
 
     const body: Types.StatementListType =
-      this._lookahead && this._lookahead.type !== '}'
-        ? this.StatementList('}')
-        : [];
+      this._lookahead?.type !== '}' ? this.StatementList('}') : [];
 
     this._eat('}');
 
@@ -156,7 +154,7 @@ export default class Parser {
   AssignmentExpression(): Types.ExpressionType {
     const left = this.AdditiveExpression();
 
-    if (this._lookahead && !this._isAssignmentOperator(this._lookahead.type)) {
+    if (!this._isAssignmentOperator(this._lookahead?.type)) {
       return left;
     }
 
@@ -207,7 +205,7 @@ export default class Parser {
   /**
    * Whether the token is an assignment operator.
    */
-  _isAssignmentOperator(tokenType: string): boolean {
+  _isAssignmentOperator(tokenType?: string): boolean {
     return tokenType === 'SIMPLE_ASSIGN' || tokenType === 'COMPLEX_ASSIGN';
   }
 
@@ -218,7 +216,7 @@ export default class Parser {
    * ;
    */
   AssignmentOperator(): Token {
-    if (this._lookahead && this._lookahead.type === 'SIMPLE_ASSIGN') {
+    if (this._lookahead?.type === 'SIMPLE_ASSIGN') {
       return this._eat('SIMPLE_ASSIGN');
     }
 
@@ -260,7 +258,7 @@ export default class Parser {
   ): Types.BinaryExpressionType {
     let left = this[builderName]();
 
-    while (this._lookahead && this._lookahead.type === operatorToken) {
+    while (this._lookahead?.type === operatorToken) {
       // Operator: +, -, *, /
       const operator = this._eat(operatorToken).value;
 
@@ -285,24 +283,19 @@ export default class Parser {
    *  ;
    */
   PrimaryExpression(): Types.ExpressionType {
-    if (this._lookahead) {
-      if (this._isLiteral(this._lookahead.type)) {
-        return this.Literal();
-      }
-      switch (this._lookahead.type) {
-        case '(':
-          return this.ParenthesizedExpression();
-        default:
-          return this.LeftHandSideExpression();
-      }
+    if (this._isLiteral(this._lookahead?.type)) {
+      return this.Literal();
     }
 
-    throw new SyntaxError(
-      `PrimaryExpression: unexpected primary expression production`
-    );
+    switch (this._lookahead?.type) {
+      case '(':
+        return this.ParenthesizedExpression();
+      default:
+        return this.LeftHandSideExpression();
+    }
   }
 
-  _isLiteral(tokenType: string): boolean {
+  _isLiteral(tokenType?: string): boolean {
     return tokenType === 'NUMBER' || tokenType === 'STRING';
   }
 
@@ -326,13 +319,11 @@ export default class Parser {
    *   ;
    */
   Literal(): Types.LiteralType {
-    if (this._lookahead) {
-      switch (this._lookahead.type) {
-        case 'NUMBER':
-          return this.NumericLiteral();
-        case 'STRING':
-          return this.StringLiteral();
-      }
+    switch (this._lookahead?.type) {
+      case 'NUMBER':
+        return this.NumericLiteral();
+      case 'STRING':
+        return this.StringLiteral();
     }
 
     throw new SyntaxError(`Literal: unexpected literal production`);
@@ -370,7 +361,7 @@ export default class Parser {
   _eat(tokenType: string): Token {
     const token = this._lookahead;
 
-    if (token === null) {
+    if (!token) {
       throw new SyntaxError(
         `Unexpected end of input, expected: "${tokenType}"`
       );
