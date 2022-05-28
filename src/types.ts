@@ -46,9 +46,20 @@ export type BinaryExpressionNodeType = {
   right: ExpressionType;
 };
 
+export type LogicalExpressionNodeType = {
+  type: 'LogicalExpression';
+  operator: string;
+  left: ExpressionType;
+  right: ExpressionType;
+};
+
 export type StringLiteralType = { type: 'StringLiteral'; value: string };
 
 export type NumericLiteralType = { type: 'NumericLiteral'; value: number };
+
+export type BooleanLiteralType = { type: 'BooleanLiteral'; value: boolean };
+
+export type NullLiteralType = { type: 'NullLiteral'; value: null };
 
 export type ExpressionType = AssignmentExpressionType;
 
@@ -62,6 +73,7 @@ export type StatementType =
   | EmptyStatementType;
 
 export type AssignmentExpressionType =
+  | LogicalExpressionType
   | BinaryExpressionType
   | AssignmentExpressionNodeType;
 
@@ -69,8 +81,16 @@ export type BinaryExpressionType =
   | IdentifierType
   | LiteralType
   | AssignmentExpressionNodeType
+  | BinaryExpressionNodeType
+  | LogicalExpressionNodeType;
+
+export type LogicalExpressionType =
+  | IdentifierType
+  | LiteralType
+  | AssignmentExpressionNodeType
+  | LogicalExpressionNodeType
   | BinaryExpressionNodeType;
 
-export type LiteralType = StringLiteralType | NumericLiteralType;
+export type LiteralType = StringLiteralType | NumericLiteralType | BooleanLiteralType | NullLiteralType;
 
 

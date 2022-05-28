@@ -106,19 +106,20 @@ export default class Parser {
 
     const consequent = this.Statement();
 
-    const alternate = this._lookahead && this._lookahead.type === 'else'
-      ? this._eat('else') && this.Statement()
-      : null;
+    const alternate =
+      this._lookahead && this._lookahead.type === 'else'
+        ? this._eat('else') && this.Statement()
+        : null;
 
     return {
       type: 'IfStatement',
       test,
       consequent,
       alternate,
-    }
+    };
   }
 
-    /**
+  /**
    * VariableStatement
    * : 'let' VariableDeclarationList ';'
    * ;
@@ -159,15 +160,18 @@ export default class Parser {
     const id = this.Identifier();
 
     // OptVariableInitializer
-    const init = this._lookahead && this._lookahead.type !== ';' && this._lookahead?.type !== ','
-    ? this.VariableInitializer()
-    : null;
+    const init =
+      this._lookahead &&
+      this._lookahead.type !== ';' &&
+      this._lookahead?.type !== ','
+        ? this.VariableInitializer()
+        : null;
 
     return {
       type: 'VariableDeclaration',
       id,
       init,
-    }
+    };
   }
 
   /**
@@ -239,12 +243,12 @@ export default class Parser {
 
   /**
    * AssignmentExpression
-   *   : RelationalExpression
+   *   : LogicalORExpression
    *   | LeftHandSideExpression AssignmentOperator AssignmentExpression
    *   ;
    */
   AssignmentExpression(): Types.AssignmentExpressionType {
-    const left = this.AdditiveExpression();
+    const left = this.LogicalORExpression();
 
     if (!this._isAssignmentOperator(this._lookahead?.type)) {
       return left;
@@ -316,16 +320,59 @@ export default class Parser {
   }
 
   /**
+   * Logical OR expression.
+   *
+   *   x || y
+   *
+   * LogicalORExpression
+   *   : LogicalORExpression
+   *   | LogicalORExpression LOGICAL_OR LogicalANDExpression
+   *   ;
+   */
+  LogicalORExpression() {
+    return this._LogicalExpression('LogicalANDExpression', 'LOGICAL_OR');
+  }
+
+  /**
+   * Logical AND expression.
+   *
+   *   x && y
+   *
+   * LogicalANDExpression
+   *   | EqualityExpression
+   *   : LogicalANDExpression EQUALITY_OPERATOR EqualityExpression
+   *   ;
+   */
+  LogicalANDExpression() {
+    return this._LogicalExpression('EqualityExpression', 'LOGICAL_AND');
+  }
+
+  /**
+   * EQUALITY_OPERATOR: ==, !=
+   *
+   *   x == y
+   *   x != y
+   *
+   * EqualityExpression
+   *   : RelationalExpression
+   *   | EqualityExpression EQUALITY_OPERATOR RelationalExpression
+   *   ;
+   */
+  EqualityExpression(): Types.BinaryExpressionType {
+    return this._BinaryExpression('RelationalExpression', 'EQUALITY_OPERATOR');
+  }
+
+  /**
    * RELATIONAL_OPERATOR: >, >=, <, <=
    *
    *   x > y
-   *   x >= y
+   *   x >= ytrue
    *   x < y
    *   x <= y
    *
    * RelationalExpression
    *   : AdditiveExpression
-   *   | AdditiveExpression RELATIONAL_OPERATOR RelationalExpression
+   *   | RelationalExpression RELATIONAL_OPERATOR AdditiveExpression
    *   ;
    */
   RelationalExpression(): Types.BinaryExpressionType {
@@ -359,11 +406,45 @@ export default class Parser {
   }
 
   /**
+   * Generic helper for logicalExpression nodes.
+   */
+  _LogicalExpression(
+    builderName: 'LogicalANDExpression' | 'EqualityExpression',
+    operatorToken: 'LOGICAL_OR' | 'LOGICAL_AND'
+  ): Types.LogicalExpressionType {
+    let left = this[builderName]();
+
+    while (this._lookahead?.type === operatorToken) {
+      // Operator: +, -, *, /
+      const operator = this._eat(operatorToken).value;
+
+      const right = this[builderName]();
+
+      left = {
+        type: 'LogicalExpression',
+        operator,
+        left,
+        right,
+      };
+    }
+
+    return left;
+  }
+
+  /**
    * Generic binary expression
    */
   _BinaryExpression(
-    builderName: 'MultiplicativeExpression' | 'PrimaryExpression' | 'AdditiveExpression',
-    operatorToken: 'ADDITIVE_OPERATOR' | 'MULTIPLICATIVE_OPERATOR' | 'RELATIONAL_OPERATOR'
+    builderName:
+      | 'MultiplicativeExpression'
+      | 'PrimaryExpression'
+      | 'AdditiveExpression'
+      | 'RelationalExpression',
+    operatorToken:
+      | 'ADDITIVE_OPERATOR'
+      | 'MULTIPLICATIVE_OPERATOR'
+      | 'RELATIONAL_OPERATOR'
+      | 'EQUALITY_OPERATOR'
   ): Types.BinaryExpressionType {
     let left = this[builderName]();
 
@@ -404,7 +485,13 @@ export default class Parser {
   }
 
   _isLiteral(tokenType?: string): boolean {
-    return tokenType === 'NUMBER' || tokenType === 'STRING';
+    return (
+      tokenType === 'NUMBER' ||
+      tokenType === 'STRING' ||
+      tokenType === 'true' ||
+      tokenType === 'false' ||
+      tokenType === 'null'
+    );
   }
 
   /**
@@ -424,6 +511,8 @@ export default class Parser {
    * Literal
    *   : NumericLiteral
    *   | StringLiteral
+   *   | BooleanLiteral
+   *   | NumericLiteral
    *   ;
    */
   Literal(): Types.LiteralType {
@@ -432,9 +521,44 @@ export default class Parser {
         return this.NumericLiteral();
       case 'STRING':
         return this.StringLiteral();
+      case 'true':
+        return this.BooleanLiteral(true);
+      case 'false':
+        return this.BooleanLiteral(false);
+      case 'null':
+        return this.NullLiteral();
     }
 
     throw new SyntaxError(`Literal: unexpected literal production`);
+  }
+
+  /**
+   * BooleanLiteral
+   *   : 'true'
+   *   | 'false'
+   *   ;
+   */
+  BooleanLiteral(value: boolean): Types.BooleanLiteralType {
+    this._eat(value ? 'true' : 'false');
+
+    return {
+      type: 'BooleanLiteral',
+      value,
+    };
+  }
+
+  /**
+   * NullLiteral
+   *   : 'null'
+   *   ;
+   */
+  NullLiteral(): Types.NullLiteralType {
+    this._eat('null');
+
+    return {
+      type: 'NullLiteral',
+      value: null,
+    };
   }
 
   /**

@@ -8,6 +8,8 @@ import assignmentTest from './assignment-test';
 import variableTest from './variable-test';
 import ifTest from './if-test';
 import relationalTests from './relational-test';
+import equalityTest from './equality-test';
+import logicalTests from './logical-test';
 import assert from 'assert';
 
 /**
@@ -26,7 +28,9 @@ const tests = [
   assignmentTest,
   variableTest,
   ifTest,
-  relationalTests
+  relationalTests,
+  equalityTest,
+  logicalTests,
 ];
 
 const parser = new Parser();
@@ -36,8 +40,7 @@ const parser = new Parser();
  */
 export function exec(): void {
   const program = `
-  x + 5 > 10;
-    
+  x > 0 || x < 10;
       `;
   const ast = parser.parse(program);
 

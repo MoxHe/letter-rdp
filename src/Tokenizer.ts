@@ -31,6 +31,9 @@ const Spec: Array<[RegExp, string | null]> = [
   [/^\blet\b/, 'let'],
   [/^\bif\b/, 'if'],
   [/^\belse\b/, 'else'],
+  [/^\btrue\b/, 'true'],
+  [/^\bfalse\b/, 'false'],
+  [/^\bnull\b/, 'null'],
 
   // -----------------------------------
   // Numbers:
@@ -39,6 +42,10 @@ const Spec: Array<[RegExp, string | null]> = [
   // -----------------------------------
   // Identifiers:
   [/^\w+/, 'IDENTIFIER'],
+
+  // -----------------------------------
+  // Equality operators: ==, !=
+  [/^[=!]=/, 'EQUALITY_OPERATOR'],
 
   // -----------------------------------
   // Assignments operators: =, *=, /=, +=, -=,
@@ -52,8 +59,13 @@ const Spec: Array<[RegExp, string | null]> = [
 
 
   // -----------------------------------
-  // relational operators: >, >=, <, <=
+  // Relational operators: >, >=, <, <=
   [/^[><]=?/, 'ADDITIVE_OPERATOR'],
+
+  // -----------------------------------
+  // Logical operators: &&, ||
+  [/^&&/, 'LOGICAL_AND'],
+  [/^\|\|/, 'LOGICAL_OR'],
 
   // -----------------------------------
   // Strings:
