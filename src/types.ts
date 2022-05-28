@@ -1,38 +1,40 @@
-export type ProgramType = { type: string; body: StatementListType };
+export type ProgramType = { type: 'Program'; body: StatementListType };
 
 export type StatementListType = Array<StatementType>;
 
 export type StatementType =
   | ExpressionStatementType
   | BlockStatementType
+  | IfStatementType
+  | VariableStatementType
   | EmptyStatementType;
 
 export type IfStatementType = {
-  type: string,
+  type: 'IfStatement',
   test: ExpressionType,
   consequent: StatementType,
   alternate: StatementType | null,
 }
 
 export type VariableStatementType =  {
-  type: string,
-  declarations: VariableDeclarationType[]
+  type: 'VariableStatement',
+  declarations: Array<VariableDeclarationType>
 }
 
 export type VariableDeclarationType = {
-  type: string,
+  type: 'VariableDeclaration',
   id: IdentifierType,
   init: AssignmentExpressionType | null,
 }
 
 export type ExpressionStatementType = {
-  type: string;
+  type: 'ExpressionStatement';
   expression: ExpressionType;
 };
 
-export type BlockStatementType = { type: string; body: StatementListType };
+export type BlockStatementType = { type: 'BlockStatement'; body: StatementListType };
 
-export type EmptyStatementType = { type: string };
+export type EmptyStatementType = { type: 'EmptyStatement' };
 
 export type ExpressionType = AssignmentExpressionType;
 
@@ -45,7 +47,7 @@ export type AssignmentExpressionType =
       right: AssignmentExpressionType;
     };
 
-export type IdentifierType = { type: string; name: string };
+export type IdentifierType = { type: 'Identifier'; name: string };
 
 export type BinaryExpressionType =
   | IdentifierType
@@ -59,7 +61,7 @@ export type BinaryExpressionType =
 
 export type LiteralType = StringLiteralType | NumericLiteralType;
 
-export type StringLiteralType = { type: string; value: string };
+export type StringLiteralType = { type: 'StringLiteral'; value: string };
 
-export type NumericLiteralType = { type: string; value: number };
+export type NumericLiteralType = { type: 'NumericLiteral'; value: number };
 
