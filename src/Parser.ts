@@ -286,7 +286,7 @@ export default class Parser {
    */
   _checkValidAssignmentTarget(
     node: Types.BinaryExpressionType
-  ): Types.BinaryExpressionType {
+  ): Types.IdentifierType {
     if (node.type === 'Identifier') {
       return node;
     }
