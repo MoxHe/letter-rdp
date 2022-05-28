@@ -29,6 +29,8 @@ const Spec: Array<[RegExp, string | null]> = [
   // -----------------------------------
   // Keywords:
   [/^\blet\b/, 'let'],
+  [/^\bif\b/, 'if'],
+  [/^\belse\b/, 'else'],
 
   // -----------------------------------
   // Numbers:
@@ -47,6 +49,11 @@ const Spec: Array<[RegExp, string | null]> = [
   // Math operators: +, -, *, /
   [/^[+\-]/, 'ADDITIVE_OPERATOR'],
   [/^[*\/]/, 'MULTIPLICATIVE_OPERATOR'],
+
+
+  // -----------------------------------
+  // relational operators: >, >=, <, <=
+  [/^[><]=?/, 'ADDITIVE_OPERATOR'],
 
   // -----------------------------------
   // Strings:

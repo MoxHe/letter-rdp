@@ -7,7 +7,14 @@ export type StatementType =
   | BlockStatementType
   | EmptyStatementType;
 
-export type VariableStatement =  {
+export type IfStatementType = {
+  type: string,
+  test: ExpressionType,
+  consequent: StatementType,
+  alternate: StatementType | null,
+}
+
+export type VariableStatementType =  {
   type: string,
   declarations: VariableDeclarationType[]
 }
@@ -46,8 +53,8 @@ export type BinaryExpressionType =
   | {
       type: string;
       operator: string;
-      left: LiteralType | BinaryExpressionType | IdentifierType;
-      right: LiteralType | BinaryExpressionType;
+      left: BinaryExpressionType;
+      right: BinaryExpressionType;
     };
 
 export type LiteralType = StringLiteralType | NumericLiteralType;

@@ -6,6 +6,8 @@ import emptyStatementTest from './empty-statement-test';
 import mathTest from './math-test';
 import assignmentTest from './assignment-test';
 import variableTest from './variable-test';
+import ifTest from './if-test';
+import relationalTests from './relational-test';
 import assert from 'assert';
 
 /**
@@ -22,7 +24,9 @@ const tests = [
   emptyStatementTest,
   mathTest,
   assignmentTest,
-  variableTest
+  variableTest,
+  ifTest,
+  relationalTests
 ];
 
 const parser = new Parser();
@@ -32,8 +36,9 @@ const parser = new Parser();
  */
 export function exec(): void {
   const program = `
-  let foo = bar = 10;
-  `;
+  x + 5 > 10;
+    
+      `;
   const ast = parser.parse(program);
 
   console.log(JSON.stringify(ast, null, 2));

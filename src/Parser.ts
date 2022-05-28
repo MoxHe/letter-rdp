@@ -73,12 +73,15 @@ export default class Parser {
    *  | BlockStatement
    *  | EmptyStatement
    *  | VariableStatement
+   *  | IfStatement
    *  ;
    */
   Statement(): Types.StatementType {
     switch (this._lookahead?.type) {
       case ';':
         return this.EmptyStatement();
+      case 'if':
+        return this.IfStatement();
       case '{':
         return this.BlockStatement();
       case 'let':
@@ -88,12 +91,39 @@ export default class Parser {
     }
   }
 
+  /**
+   * IfStatement
+   *   : 'if' '(' Expression ')' Statement
+   *   | 'if' '(' Expression ')' Statement 'else' Statement
+   *   ;
+   */
+  IfStatement(): Types.IfStatementType {
+    this._eat('if');
+
+    this._eat('(');
+    const test = this.Expression();
+    this._eat(')');
+
+    const consequent = this.Statement();
+
+    const alternate = this._lookahead && this._lookahead.type === 'else'
+      ? this._eat('else') && this.Statement()
+      : null;
+
+    return {
+      type: 'IfStatement',
+      test,
+      consequent,
+      alternate,
+    }
+  }
+
     /**
    * VariableStatement
    * : 'let' VariableDeclarationList ';'
    * ;
    */
-  VariableStatement(): Types.VariableStatement {
+  VariableStatement(): Types.VariableStatementType {
     this._eat('let');
     const declarations = this.VariableDeclarationList();
     this._eat(';');
@@ -209,7 +239,7 @@ export default class Parser {
 
   /**
    * AssignmentExpression
-   *   : AdditiveExpression
+   *   : RelationalExpression
    *   | LeftHandSideExpression AssignmentOperator AssignmentExpression
    *   ;
    */
@@ -286,6 +316,23 @@ export default class Parser {
   }
 
   /**
+   * RELATIONAL_OPERATOR: >, >=, <, <=
+   *
+   *   x > y
+   *   x >= y
+   *   x < y
+   *   x <= y
+   *
+   * RelationalExpression
+   *   : AdditiveExpression
+   *   | AdditiveExpression RELATIONAL_OPERATOR RelationalExpression
+   *   ;
+   */
+  RelationalExpression(): Types.BinaryExpressionType {
+    return this._BinaryExpression('AdditiveExpression', 'RELATIONAL_OPERATOR');
+  }
+
+  /**
    * AdditiveExpression
    *   : MultiplicativeExpression
    *   | AdditiveExpression ADDITIVE_OPERATOR MultiplicativeExpression -> MultiplicativeExpression ADDITIVE_OPERATOR MultiplicativeExpression ADDITIVE_OPERATOR MultiplicativeExpression
@@ -315,8 +362,8 @@ export default class Parser {
    * Generic binary expression
    */
   _BinaryExpression(
-    builderName: 'MultiplicativeExpression' | 'PrimaryExpression',
-    operatorToken: 'ADDITIVE_OPERATOR' | 'MULTIPLICATIVE_OPERATOR'
+    builderName: 'MultiplicativeExpression' | 'PrimaryExpression' | 'AdditiveExpression',
+    operatorToken: 'ADDITIVE_OPERATOR' | 'MULTIPLICATIVE_OPERATOR' | 'RELATIONAL_OPERATOR'
   ): Types.BinaryExpressionType {
     let left = this[builderName]();
 
