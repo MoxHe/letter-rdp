@@ -159,7 +159,7 @@ export default class Parser {
     const id = this.Identifier();
 
     // OptVariableInitializer
-    const init = this._lookahead && this._lookahead?.type !== ';' && this._lookahead?.type !== ','
+    const init = this._lookahead && this._lookahead.type !== ';' && this._lookahead?.type !== ','
     ? this.VariableInitializer()
     : null;
 
@@ -243,7 +243,7 @@ export default class Parser {
    *   | LeftHandSideExpression AssignmentOperator AssignmentExpression
    *   ;
    */
-  AssignmentExpression(): Types.ExpressionType {
+  AssignmentExpression(): Types.AssignmentExpressionType {
     const left = this.AdditiveExpression();
 
     if (!this._isAssignmentOperator(this._lookahead?.type)) {
