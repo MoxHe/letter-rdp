@@ -10,6 +10,7 @@ import ifTest from './if-test';
 import relationalTests from './relational-test';
 import equalityTest from './equality-test';
 import logicalTests from './logical-test';
+import unaryTest from './unary-test';
 import assert from 'assert';
 
 /**
@@ -31,6 +32,7 @@ const tests = [
   relationalTests,
   equalityTest,
   logicalTests,
+  unaryTest,
 ];
 
 const parser = new Parser();
@@ -40,7 +42,7 @@ const parser = new Parser();
  */
 export function exec(): void {
   const program = `
-  x > 0 || x < 10;
+    --x;
       `;
   const ast = parser.parse(program);
 

@@ -57,7 +57,9 @@ export default class Parser {
    *   | StatementList Statement -> Statement Statement Statement Statement
    *   ;
    */
-  StatementList(stopLookahead: string | null = null): Types.StatementListType {
+  StatementList(
+    stopLookahead: string | null = null
+  ): Array<Types.StatementType> {
     const statementList = [this.Statement()];
 
     while (this._lookahead && this._lookahead.type !== stopLookahead) {
@@ -179,7 +181,7 @@ export default class Parser {
    *  : SIMPLE_ASSIGN AssignmentExpression
    *  ;
    */
-  VariableInitializer(): Types.AssignmentExpressionType {
+  VariableInitializer(): Types.ExpressionType {
     this._eat('SIMPLE_ASSIGN');
 
     return this.AssignmentExpression();
@@ -206,7 +208,7 @@ export default class Parser {
   BlockStatement(): Types.BlockStatementType {
     this._eat('{');
 
-    const body: Types.StatementListType =
+    const body: Array<Types.StatementType> =
       this._lookahead?.type !== '}' ? this.StatementList('}') : [];
 
     this._eat('}');
@@ -247,7 +249,7 @@ export default class Parser {
    *   | LeftHandSideExpression AssignmentOperator AssignmentExpression
    *   ;
    */
-  AssignmentExpression(): Types.AssignmentExpressionType {
+  AssignmentExpression(): Types.ExpressionType {
     const left = this.LogicalORExpression();
 
     if (!this._isAssignmentOperator(this._lookahead?.type)) {
@@ -260,15 +262,6 @@ export default class Parser {
       left: this._checkValidAssignmentTarget(left),
       right: this.AssignmentExpression(),
     };
-  }
-
-  /**
-   * LeftHandSideExpression
-   * : Identifier
-   * ;
-   */
-  LeftHandSideExpression(): Types.IdentifierType {
-    return this.Identifier();
   }
 
   /**
@@ -289,7 +282,7 @@ export default class Parser {
    * Extra check whether it's a valid assinment target.
    */
   _checkValidAssignmentTarget(
-    node: Types.BinaryExpressionType
+    node: Types.ExpressionType
   ): Types.IdentifierType {
     if (node.type === 'Identifier') {
       return node;
@@ -329,7 +322,7 @@ export default class Parser {
    *   | LogicalORExpression LOGICAL_OR LogicalANDExpression
    *   ;
    */
-  LogicalORExpression() {
+  LogicalORExpression(): Types.ExpressionType {
     return this._LogicalExpression('LogicalANDExpression', 'LOGICAL_OR');
   }
 
@@ -343,7 +336,7 @@ export default class Parser {
    *   : LogicalANDExpression EQUALITY_OPERATOR EqualityExpression
    *   ;
    */
-  LogicalANDExpression() {
+  LogicalANDExpression(): Types.ExpressionType {
     return this._LogicalExpression('EqualityExpression', 'LOGICAL_AND');
   }
 
@@ -358,7 +351,7 @@ export default class Parser {
    *   | EqualityExpression EQUALITY_OPERATOR RelationalExpression
    *   ;
    */
-  EqualityExpression(): Types.BinaryExpressionType {
+  EqualityExpression(): Types.ExpressionType {
     return this._BinaryExpression('RelationalExpression', 'EQUALITY_OPERATOR');
   }
 
@@ -375,7 +368,7 @@ export default class Parser {
    *   | RelationalExpression RELATIONAL_OPERATOR AdditiveExpression
    *   ;
    */
-  RelationalExpression(): Types.BinaryExpressionType {
+  RelationalExpression(): Types.ExpressionType {
     return this._BinaryExpression('AdditiveExpression', 'RELATIONAL_OPERATOR');
   }
 
@@ -385,7 +378,7 @@ export default class Parser {
    *   | AdditiveExpression ADDITIVE_OPERATOR MultiplicativeExpression -> MultiplicativeExpression ADDITIVE_OPERATOR MultiplicativeExpression ADDITIVE_OPERATOR MultiplicativeExpression
    *   ;
    */
-  AdditiveExpression(): Types.BinaryExpressionType {
+  AdditiveExpression(): Types.ExpressionType {
     return this._BinaryExpression(
       'MultiplicativeExpression',
       'ADDITIVE_OPERATOR'
@@ -395,14 +388,11 @@ export default class Parser {
   /**
    * MultiplicativeExpression
    *   : PrimaryExpression
-   *   | MultiplicativeExpression MULTIPLICATIVE_OPERATOR PrimaryExpression -> PrimaryExpression ADDITIVE_OPERATOR PrimaryExpression ADDITIVE_OPERATOR PrimaryExpression
+   *   | MultiplicativeExpression MULTIPLICATIVE_OPERATOR UnaryExpression -> UnaryExpression ADDITIVE_OPERATOR UnaryExpression ADDITIVE_OPERATOR UnaryExpression
    *   ;
    */
-  MultiplicativeExpression(): Types.BinaryExpressionType {
-    return this._BinaryExpression(
-      'PrimaryExpression',
-      'MULTIPLICATIVE_OPERATOR'
-    );
+  MultiplicativeExpression(): Types.ExpressionType {
+    return this._BinaryExpression('UnaryExpression', 'MULTIPLICATIVE_OPERATOR');
   }
 
   /**
@@ -411,7 +401,7 @@ export default class Parser {
   _LogicalExpression(
     builderName: 'LogicalANDExpression' | 'EqualityExpression',
     operatorToken: 'LOGICAL_OR' | 'LOGICAL_AND'
-  ): Types.LogicalExpressionType {
+  ): Types.ExpressionType {
     let left = this[builderName]();
 
     while (this._lookahead?.type === operatorToken) {
@@ -439,13 +429,14 @@ export default class Parser {
       | 'MultiplicativeExpression'
       | 'PrimaryExpression'
       | 'AdditiveExpression'
-      | 'RelationalExpression',
+      | 'RelationalExpression'
+      | 'UnaryExpression',
     operatorToken:
       | 'ADDITIVE_OPERATOR'
       | 'MULTIPLICATIVE_OPERATOR'
       | 'RELATIONAL_OPERATOR'
       | 'EQUALITY_OPERATOR'
-  ): Types.BinaryExpressionType {
+  ): Types.ExpressionType {
     let left = this[builderName]();
 
     while (this._lookahead?.type === operatorToken) {
@@ -466,10 +457,47 @@ export default class Parser {
   }
 
   /**
+   * UnaryExpression
+   *  : LeftHandSideExpression
+   *  | ADDITIVE_OPERATOR UnaryExpression
+   *  | LOGICAL_NOT UnaryExpression
+   *  ;
+   */
+  UnaryExpression(): Types.ExpressionType {
+    let operator;
+    switch (this._lookahead?.type) {
+      case 'ADDITIVE_OPERATOR':
+        operator = this._eat('ADDITIVE_OPERATOR').value;
+        break;
+      case 'LOGICAL_NOT':
+        operator = this._eat('LOGICAL_NOT').value;
+    }
+
+    if (operator) {
+      return {
+        type: 'UnaryExpression',
+        operator,
+        argument: this.UnaryExpression(),
+      };
+    }
+
+    return this.LeftHandSideExpression();
+  }
+
+  /**
+   * LeftHandSideExpression
+   * : PrimaryExpression
+   * ;
+   */
+  LeftHandSideExpression(): Types.ExpressionType {
+    return this.PrimaryExpression();
+  }
+
+  /**
    * PrimaryExpression
    *  : Literal
    *  | ParenthesizedExpression
-   *  | LeftHandSideExpression
+   *  | Identifier
    *  ;
    */
   PrimaryExpression(): Types.ExpressionType {
@@ -480,7 +508,7 @@ export default class Parser {
       case '(':
         return this.ParenthesizedExpression();
       default:
-        return this.LeftHandSideExpression();
+        return this.Identifier();
     }
   }
 

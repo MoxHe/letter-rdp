@@ -1,69 +1,99 @@
-export type ProgramType = { type: 'Program'; body: StatementListType };
+export interface ProgramType {
+  type: 'Program';
+  body: Array<StatementType>;
+}
 
-export type IfStatementType = {
+export interface IfStatementType {
   type: 'IfStatement';
   test: ExpressionType;
   consequent: StatementType;
   alternate: StatementType | null;
-};
+}
 
-export type VariableStatementType = {
+export interface VariableStatementType {
   type: 'VariableStatement';
   declarations: Array<VariableDeclarationType>;
-};
+}
 
-export type VariableDeclarationType = {
+export interface VariableDeclarationType {
   type: 'VariableDeclaration';
   id: IdentifierType;
-  init: AssignmentExpressionType | null;
-};
+  init: ExpressionType | null;
+}
 
-export type ExpressionStatementType = {
+export interface ExpressionStatementType {
   type: 'ExpressionStatement';
   expression: ExpressionType;
-};
+}
 
-export type BlockStatementType = {
+export interface BlockStatementType {
   type: 'BlockStatement';
-  body: StatementListType;
-};
+  body: Array<StatementType>;
+}
 
-export type EmptyStatementType = { type: 'EmptyStatement' };
+export interface EmptyStatementType {
+  type: 'EmptyStatement';
+}
 
-export type AssignmentExpressionNodeType = {
+export interface AssignmentExpressionNodeType {
   type: 'AssignmentExpression';
   operator: string;
   left: IdentifierType;
-  right: AssignmentExpressionType;
-};
+  right: ExpressionType;
+}
 
-export type IdentifierType = { type: 'Identifier'; name: string };
+export interface IdentifierType {
+  type: 'Identifier';
+  name: string;
+}
 
-export type BinaryExpressionNodeType = {
+export interface UnaryExpressionNodeType {
+  type: 'UnaryExpression';
+  operator: string;
+  argument: ExpressionType;
+}
+
+export interface BinaryExpressionNodeType {
   type: 'BinaryExpression';
   operator: string;
   left: ExpressionType;
   right: ExpressionType;
-};
+}
 
-export type LogicalExpressionNodeType = {
+export interface LogicalExpressionNodeType {
   type: 'LogicalExpression';
   operator: string;
   left: ExpressionType;
   right: ExpressionType;
-};
+}
 
-export type StringLiteralType = { type: 'StringLiteral'; value: string };
+export interface StringLiteralType {
+  type: 'StringLiteral';
+  value: string;
+}
 
-export type NumericLiteralType = { type: 'NumericLiteral'; value: number };
+export interface NumericLiteralType {
+  type: 'NumericLiteral';
+  value: number;
+}
 
-export type BooleanLiteralType = { type: 'BooleanLiteral'; value: boolean };
+export interface BooleanLiteralType {
+  type: 'BooleanLiteral';
+  value: boolean;
+}
 
-export type NullLiteralType = { type: 'NullLiteral'; value: null };
+export interface NullLiteralType {
+  type: 'NullLiteral';
+  value: null;
+}
 
-export type ExpressionType = AssignmentExpressionType;
-
-export type StatementListType = Array<StatementType>;
+export type ExpressionType =
+  | IdentifierType
+  | LiteralType
+  | AssignmentExpressionNodeType
+  | BinaryExpressionNodeType
+  | UnaryExpressionNodeType
+  | LogicalExpressionNodeType;
 
 export type StatementType =
   | ExpressionStatementType
@@ -72,25 +102,9 @@ export type StatementType =
   | VariableStatementType
   | EmptyStatementType;
 
-export type AssignmentExpressionType =
-  | LogicalExpressionType
-  | BinaryExpressionType
-  | AssignmentExpressionNodeType;
-
-export type BinaryExpressionType =
-  | IdentifierType
-  | LiteralType
-  | AssignmentExpressionNodeType
-  | BinaryExpressionNodeType
-  | LogicalExpressionNodeType;
-
-export type LogicalExpressionType =
-  | IdentifierType
-  | LiteralType
-  | AssignmentExpressionNodeType
-  | LogicalExpressionNodeType
-  | BinaryExpressionNodeType;
-
-export type LiteralType = StringLiteralType | NumericLiteralType | BooleanLiteralType | NullLiteralType;
-
+export type LiteralType =
+  | StringLiteralType
+  | NumericLiteralType
+  | BooleanLiteralType
+  | NullLiteralType;
 

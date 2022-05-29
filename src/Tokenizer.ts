@@ -63,9 +63,10 @@ const Spec: Array<[RegExp, string | null]> = [
   [/^[><]=?/, 'ADDITIVE_OPERATOR'],
 
   // -----------------------------------
-  // Logical operators: &&, ||
+  // Logical operators: &&, ||, !
   [/^&&/, 'LOGICAL_AND'],
   [/^\|\|/, 'LOGICAL_OR'],
+  [/^!/, 'LOGICAL_NOT'],
 
   // -----------------------------------
   // Strings:
