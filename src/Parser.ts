@@ -76,6 +76,7 @@ export default class Parser {
    *  | EmptyStatement
    *  | VariableStatement
    *  | IfStatement
+   *  | IterationStatement
    *  ;
    */
   Statement(): Types.StatementType {
@@ -88,9 +89,119 @@ export default class Parser {
         return this.BlockStatement();
       case 'let':
         return this.VariableStatement();
+      case 'while':
+      case 'do':
+      case 'for':
+        return this.IterationStatement();
       default:
         return this.ExpressionStatement();
     }
+  }
+
+  /**
+   * IterationStatement
+   *   : WhileStatement
+   *   | DoWhileStatement
+   *   | ForStatement
+   *   ;
+   */
+  IterationStatement(): Types.IterationStatementType {
+    switch (this._lookahead?.type) {
+      case 'while':
+        return this.WhileStatement();
+      case 'do':
+        return this.DoWhileStatement();
+      default:
+        return this.ForStatement();
+    }
+  }
+
+  /**
+   * WhileStatement
+   *  : 'while' '(' Expression ')' Statement
+   *  ;
+   */
+  WhileStatement(): Types.WhileStatementType {
+    this._eat('while');
+
+    this._eat('(');
+    const test = this.Expression();
+    this._eat(')');
+
+    const body = this.Statement();
+
+    return {
+      type: 'WhileStatement',
+      test,
+      body,
+    };
+  }
+
+  /**
+   * DoWhileStatement
+   *   : 'do' Statement 'while' '(' Expression ')' ';'
+   */
+  DoWhileStatement(): Types.DoWhileStatementType {
+    this._eat('do');
+
+    const body = this.Statement();
+
+    this._eat('while');
+
+    this._eat('(');
+    const test = this.Expression();
+    this._eat(')');
+
+    this._eat(';')
+
+    return {
+      type: 'DoWhileStatement',
+      body,
+      test,
+    };
+  }
+
+  /**
+   * ForStatement
+   *   : 'for' '(' OptForStatementInit ';' OptExpression ';' 'OptExpression' ')' Statement
+   *   ;
+   */
+  ForStatement(): Types.ForStatementType {
+    this._eat('for');
+    this._eat('(');
+
+    const init = this._lookahead?.type !== ';' ? this.ForStatementInit() : null;
+    this._eat(';');
+
+    const test = this._lookahead?.type !== ';' ? this.Expression() : null;
+    this._eat(';');
+
+    const update = this._lookahead?.type !== ')' ? this.Expression() : null;
+    this._eat(')');
+
+    const body = this.Statement();
+
+    return {
+      type: 'ForStatement',
+      init,
+      test,
+      update,
+      body,
+    };
+  }
+
+  /**
+   * ForStatementInit
+   *   : VariableStatementInit
+   *   | Expression
+   *   ;
+   */
+  ForStatementInit(): Types.ForStatementInitType {
+    if (this._lookahead?.type === 'let') {
+      return this.VariableStatementInit();
+    }
+
+    return this.Expression();
   }
 
   /**
@@ -122,19 +233,30 @@ export default class Parser {
   }
 
   /**
-   * VariableStatement
-   * : 'let' VariableDeclarationList ';'
-   * ;
+   * VariableStatementInit
+   *  : 'let' VariableDeclarationList
+   *  ;
    */
-  VariableStatement(): Types.VariableStatementType {
+  VariableStatementInit(): Types.VariableStatementType {
     this._eat('let');
     const declarations = this.VariableDeclarationList();
-    this._eat(';');
 
     return {
       type: 'VariableStatement',
       declarations,
     };
+  }
+
+  /**
+   * VariableStatement
+   * : 'let' VariableDeclarationList ';'
+   * ;
+   */
+  VariableStatement(): Types.VariableStatementType {
+    const variableStatement = this.VariableStatementInit();
+    this._eat(';');
+
+    return variableStatement;
   }
 
   /**

@@ -10,6 +10,27 @@ export interface IfStatementType {
   alternate: StatementType | null;
 }
 
+export interface WhileStatementType {
+  type: 'WhileStatement';
+  test: ExpressionType;
+  body: StatementType;
+}
+
+export interface DoWhileStatementType {
+  type: 'DoWhileStatement';
+  test: ExpressionType;
+  body: StatementType;
+}
+
+
+export interface ForStatementType {
+  type: 'ForStatement';
+  init: ForStatementInitType | null;
+  test:  ExpressionType | null;
+  update: ExpressionType | null;
+  body: StatementType;
+}
+
 export interface VariableStatementType {
   type: 'VariableStatement';
   declarations: Array<VariableDeclarationType>;
@@ -87,6 +108,13 @@ export interface NullLiteralType {
   value: null;
 }
 
+export type ForStatementInitType = VariableStatementType | ExpressionType;
+
+export type IterationStatementType =
+  | WhileStatementType
+  | DoWhileStatementType
+  | ForStatementType;
+
 export type ExpressionType =
   | IdentifierType
   | LiteralType
@@ -100,7 +128,8 @@ export type StatementType =
   | BlockStatementType
   | IfStatementType
   | VariableStatementType
-  | EmptyStatementType;
+  | EmptyStatementType
+  | IterationStatementType;
 
 export type LiteralType =
   | StringLiteralType

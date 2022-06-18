@@ -12,6 +12,9 @@ import equalityTest from './equality-test';
 import logicalTests from './logical-test';
 import unaryTest from './unary-test';
 import assert from 'assert';
+import whileTest from './while-test';
+import doWhileTest from './do-while-test';
+import forTest from './for-test';
 
 /**
  * Main test runner.
@@ -33,6 +36,9 @@ const tests = [
   equalityTest,
   logicalTests,
   unaryTest,
+  whileTest,
+  doWhileTest,
+  forTest
 ];
 
 const parser = new Parser();
@@ -42,7 +48,9 @@ const parser = new Parser();
  */
 export function exec(): void {
   const program = `
-    --x;
+    for (let i = 0; i < 10; i += 1) {
+      x += i;
+    }
       `;
   const ast = parser.parse(program);
 
