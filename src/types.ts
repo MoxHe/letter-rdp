@@ -10,6 +10,18 @@ export interface IfStatementType {
   alternate: StatementType | null;
 }
 
+export interface FunctionDeclarationType {
+  type: 'FunctionDeclaration';
+  name: IdentifierType;
+  params: Array<IdentifierType>;
+  body: StatementType;
+}
+
+export interface ReturnStatementType {
+  type: 'ReturnStatement';
+  argument: ExpressionType | null;
+}
+
 export interface WhileStatementType {
   type: 'WhileStatement';
   test: ExpressionType;
@@ -21,7 +33,6 @@ export interface DoWhileStatementType {
   test: ExpressionType;
   body: StatementType;
 }
-
 
 export interface ForStatementType {
   type: 'ForStatement';
@@ -129,7 +140,9 @@ export type StatementType =
   | IfStatementType
   | VariableStatementType
   | EmptyStatementType
-  | IterationStatementType;
+  | IterationStatementType
+  | ReturnStatementType
+  | FunctionDeclarationType;
 
 export type LiteralType =
   | StringLiteralType

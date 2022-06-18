@@ -15,6 +15,7 @@ import assert from 'assert';
 import whileTest from './while-test';
 import doWhileTest from './do-while-test';
 import forTest from './for-test';
+import functionDeclarationTest from './function-declaration';
 
 /**
  * Main test runner.
@@ -38,7 +39,8 @@ const tests = [
   unaryTest,
   whileTest,
   doWhileTest,
-  forTest
+  forTest,
+  functionDeclarationTest
 ];
 
 const parser = new Parser();
@@ -48,8 +50,8 @@ const parser = new Parser();
  */
 export function exec(): void {
   const program = `
-    for (let i = 0; i < 10; i += 1) {
-      x += i;
+    def square(x) {
+      return x * x;
     }
       `;
   const ast = parser.parse(program);
