@@ -16,6 +16,7 @@ import whileTest from './while-test';
 import doWhileTest from './do-while-test';
 import forTest from './for-test';
 import functionDeclarationTest from './function-declaration';
+import memberTest from './member-test';
 
 /**
  * Main test runner.
@@ -40,7 +41,8 @@ const tests = [
   whileTest,
   doWhileTest,
   forTest,
-  functionDeclarationTest
+  functionDeclarationTest,
+  memberTest
 ];
 
 const parser = new Parser();
@@ -50,8 +52,13 @@ const parser = new Parser();
  */
 export function exec(): void {
   const program = `
-    def square(x) {
-      return x * x;
+
+    let s = "hello world";
+    let i = 0;
+    while (i < s.length) {
+      s[i];
+      // console.log(i, s[i]);
+      i += 1;
     }
       `;
   const ast = parser.parse(program);

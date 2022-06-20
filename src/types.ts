@@ -70,8 +70,15 @@ export interface EmptyStatementType {
 export interface AssignmentExpressionNodeType {
   type: 'AssignmentExpression';
   operator: string;
-  left: IdentifierType;
+  left: IdentifierType | MemberExpressionType;
   right: ExpressionType;
+}
+
+export interface MemberExpressionType {
+  type: 'MemberExpression';
+  computed: boolean;
+  object: ExpressionType;
+  property: ExpressionType;
 }
 
 export interface IdentifierType {
@@ -132,6 +139,7 @@ export type ExpressionType =
   | AssignmentExpressionNodeType
   | BinaryExpressionNodeType
   | UnaryExpressionNodeType
+  | MemberExpressionType
   | LogicalExpressionNodeType;
 
 export type StatementType =

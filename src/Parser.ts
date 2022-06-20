@@ -470,8 +470,8 @@ export default class Parser {
    */
   _checkValidAssignmentTarget(
     node: Types.ExpressionType
-  ): Types.IdentifierType {
-    if (node.type === 'Identifier') {
+  ): Types.IdentifierType | Types.MemberExpressionType {
+    if (node.type === 'Identifier' || node.type === 'MemberExpression') {
       return node;
     }
 
@@ -673,11 +673,51 @@ export default class Parser {
 
   /**
    * LeftHandSideExpression
-   * : PrimaryExpression
+   * : MemberExpression
    * ;
    */
   LeftHandSideExpression(): Types.ExpressionType {
-    return this.PrimaryExpression();
+    return this.MemberExpression();
+  }
+
+  /**
+   * MemberExpression
+   *   : PrimaryExpression
+   *   | MemberExpression '.' Identifier
+   *   | MemberExpression '[' Expression ']'
+   *   ;
+   */
+  MemberExpression(): Types.ExpressionType {
+    let object = this.PrimaryExpression();
+
+    while (this._lookahead?.type === '.' || this._lookahead?.type === '[') {
+      // MemberExpression '.' Identifier
+      if (this._lookahead?.type === '.') {
+        this._eat('.');
+        const property = this.Identifier();
+        object = {
+          type: 'MemberExpression',
+          computed: false,
+          object,
+          property,
+        };
+      };
+
+      // MemberExpression '[' Expression ']'
+      if (this._lookahead?.type === '[') {
+        this._eat('[');
+        const property = this.Expression();
+        this._eat(']');
+        object = {
+          type: 'MemberExpression',
+          computed: true,
+          object,
+          property,
+        };
+      }
+    }
+
+    return object;
   }
 
   /**
