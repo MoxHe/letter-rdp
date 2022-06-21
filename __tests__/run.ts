@@ -18,6 +18,7 @@ import forTest from './for-test';
 import functionDeclarationTest from './function-declaration';
 import memberTest from './member-test';
 import callTest from './call-test';
+import classTest from './class-test';
 
 /**
  * Main test runner.
@@ -44,7 +45,8 @@ const tests = [
   forTest,
   functionDeclarationTest,
   memberTest,
-  callTest
+  callTest,
+  classTest
 ];
 
 const parser = new Parser();
@@ -55,15 +57,16 @@ const parser = new Parser();
 export function exec(): void {
   const program = `
 
-    let s = "hello world";
-    let i = 0;
-    while (i < s.length) {
-      s[i];
-      console.log(i, s[i]);
-      i += 1;
-    }
+    class Point {
+      def constructor(x, y) {
+        this.x = x;
+        this.y = y;
+      }
 
-    square(2);
+      def calc() {
+        return this.x + this.y;
+      }
+    }
       `;
   const ast = parser.parse(program);
 

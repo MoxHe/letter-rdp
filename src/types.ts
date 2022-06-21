@@ -9,6 +9,13 @@ export interface CallExpressionType {
   arguments: Array<ExpressionType>;
 }
 
+export interface ClassDeclarationType {
+  type: 'ClassDeclaration';
+  id: IdentifierType;
+  superClass: IdentifierType | null;
+  body: BlockStatementType;
+}
+
 export interface IfStatementType {
   type: 'IfStatement';
   test: ExpressionType;
@@ -132,6 +139,20 @@ export interface NullLiteralType {
   value: null;
 }
 
+export interface ThisExpressionType {
+  type: 'ThisExpression'
+}
+
+export interface NewExpressionType {
+  type: 'NewExpression',
+  callee: ExpressionType,
+  arguments: Array<ExpressionType>,
+}
+
+export interface SuperType {
+  type: 'Super'
+}
+
 export type ForStatementInitType = VariableStatementType | ExpressionType;
 
 export type IterationStatementType =
@@ -147,6 +168,9 @@ export type ExpressionType =
   | UnaryExpressionNodeType
   | MemberExpressionType
   | CallExpressionType
+  | ThisExpressionType
+  | NewExpressionType
+  | SuperType
   | LogicalExpressionNodeType;
 
 export type StatementType =
@@ -157,6 +181,7 @@ export type StatementType =
   | EmptyStatementType
   | IterationStatementType
   | ReturnStatementType
+  | ClassDeclarationType
   | FunctionDeclarationType;
 
 export type LiteralType =

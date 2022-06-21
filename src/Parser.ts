@@ -79,6 +79,7 @@ export default class Parser {
    *  | IterationStatement
    *  | FunctionDeclaration
    *  | ReturnStatement
+   *  | ClassDeclaration
    *  ;
    */
   Statement(): Types.StatementType {
@@ -93,6 +94,8 @@ export default class Parser {
         return this.VariableStatement();
       case 'def':
         return this.FunctionDeclaration();
+      case 'class':
+      return this.ClassDeclaration();
       case 'return':
         return this.ReturnStatement();
       case 'while':
@@ -102,6 +105,40 @@ export default class Parser {
       default:
         return this.ExpressionStatement();
     }
+  }
+
+  /**
+   * ClassDeclaration
+   *   : 'class' 'Identifier' OptClassExtends BlockStatement
+   *   ;
+   */
+  ClassDeclaration(): Types.ClassDeclarationType {
+    this._eat('class');
+
+    const id = this.Identifier();
+
+    const superClass =
+      this._lookahead?.type === 'extends' ? this.ClassExtends() : null;
+
+    const body = this.BlockStatement();
+
+    return {
+      type: 'ClassDeclaration',
+      id,
+      superClass,
+      body,
+    }
+  }
+
+  /**
+   * ClassExtends
+   *   : 'extends' Identifier
+   *   ;
+   */
+  ClassExtends(): Types.IdentifierType {
+    this._eat('extends');
+
+    return this.Identifier();
   }
 
   /**
@@ -687,6 +724,11 @@ export default class Parser {
    *   ;
    */
   CallMemberExpression(): Types.ExpressionType {
+    // Super call:
+    if (this._lookahead?.type === 'super') {
+      return this._CallExpression(this.Super());
+    }
+
     // Member part, might be part of a call:
     const member = this.MemberExpression();
 
@@ -803,6 +845,7 @@ export default class Parser {
    *  : Literal
    *  | ParenthesizedExpression
    *  | Identifier
+   *  | ThisExpression
    *  ;
    */
   PrimaryExpression(): Types.ExpressionType {
@@ -812,10 +855,58 @@ export default class Parser {
     switch (this._lookahead?.type) {
       case '(':
         return this.ParenthesizedExpression();
-      default:
+      case 'IDENTIFIER':
         return this.Identifier();
+      case 'this':
+        return this.ThisExpression();
+        case 'new':
+        return this.NewExpression();
+      default:
+        throw new SyntaxError(`Unexpected primary expression.`);
     }
   }
+
+  /**
+   * ThisExpression
+   *   : 'this'
+   *   ;
+   */
+  ThisExpression(): Types.ThisExpressionType {
+    this._eat('this');
+
+    return {
+      type: 'ThisExpression',
+    }
+  }
+
+  /**
+     * NewExpression
+     *   : 'new' MemberExpression '(' Arguments ')' ';' -> new MyNamespace.MyClass(1, 2);
+     *   ;
+     */
+  NewExpression(): Types.NewExpressionType {
+    this._eat('new');
+
+    return {
+      type: 'NewExpression',
+      callee: this.MemberExpression(),
+      arguments: this.Arguments(),
+    }
+  }
+
+  /**
+     * Super
+     *   : 'super'
+     *   ;
+     */
+  Super(): Types.SuperType {
+    this._eat('super');
+
+    return {
+      type: 'Super',
+    }
+  }
+
 
   _isLiteral(tokenType?: string): boolean {
     return (
