@@ -3,6 +3,12 @@ export interface ProgramType {
   body: Array<StatementType>;
 }
 
+export interface CallExpressionType {
+  type: 'CallExpression';
+  callee: ExpressionType;
+  arguments: Array<ExpressionType>;
+}
+
 export interface IfStatementType {
   type: 'IfStatement';
   test: ExpressionType;
@@ -140,6 +146,7 @@ export type ExpressionType =
   | BinaryExpressionNodeType
   | UnaryExpressionNodeType
   | MemberExpressionType
+  | CallExpressionType
   | LogicalExpressionNodeType;
 
 export type StatementType =

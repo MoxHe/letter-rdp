@@ -673,11 +673,89 @@ export default class Parser {
 
   /**
    * LeftHandSideExpression
-   * : MemberExpression
+   * : CallMemberExpression
    * ;
    */
   LeftHandSideExpression(): Types.ExpressionType {
-    return this.MemberExpression();
+    return this.CallMemberExpression();
+  }
+
+  /**
+   * CallMemberExpression
+   *   : MemberExpression
+   *   | CallExpression
+   *   ;
+   */
+  CallMemberExpression(): Types.ExpressionType {
+    // Member part, might be part of a call:
+    const member = this.MemberExpression();
+
+    // See if we have call expression:
+    if (this._lookahead?.type === '(') {
+      return this._CallExpression(member);
+    }
+
+    // Simple member expression:
+    return member;
+  }
+
+
+  /**
+   * Generic call expression helper.
+   *
+   * CallExpression
+   *   : Callee Arguments
+   *   ;
+   *
+   *   Callee
+   *     : MemberExpression
+   *     | CallExpression
+   *     ;
+   */
+  _CallExpression(callee: Types.ExpressionType): Types.ExpressionType {
+    let callExpression: Types.ExpressionType = {
+      type: 'CallExpression',
+      callee,
+      arguments: this.Arguments(),
+    }
+
+    if (this._lookahead?.type === '(') {
+      callExpression = this._CallExpression(callExpression);
+    }
+
+    return callExpression;
+  }
+
+  /**
+   * Arguments
+   *   : '(' OptArgumentList ')'
+   *   ;
+   */
+  Arguments(): Array<Types.ExpressionType> {
+    this._eat('(');
+
+    const argumentList = 
+      this._lookahead?.type !== ')' ? this.ArgumentList() : [];
+
+    this._eat(')');
+
+    return argumentList;
+  }
+
+  /**
+   * ArgumentList
+   *   : AssignmentExpression
+   *   | ArgumentList ',' AssignmentExpression
+   *   ;
+   */
+  ArgumentList(): Array<Types.ExpressionType > {
+    const argumentList = [];
+
+    do {
+      argumentList.push(this.AssignmentExpression());
+    } while (this._lookahead?.type === ',' && this._eat(','));
+
+    return argumentList;
   }
 
   /**
